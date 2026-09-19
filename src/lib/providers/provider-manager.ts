@@ -264,6 +264,12 @@ export class BookProviderManager {
         return provider.getBook(id);
       }
     }
+    
+    // Tratamento especial para o prefixo ol_ (Open Library)
+    if (id.startsWith('ol_')) {
+      const olProvider = this.providers.get('openlibrary');
+      if (olProvider) return olProvider.getBook(id);
+    }
 
     // 3. Tenta em provedores registrados no ProviderRegistry V2
     try {

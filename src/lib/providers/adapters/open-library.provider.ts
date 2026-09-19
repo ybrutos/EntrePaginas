@@ -73,7 +73,8 @@ export class OpenLibraryProvider implements BookProvider {
 
   async getBook(id: string): Promise<UnifiedBook | null> {
     try {
-      const cleanKey = id.replace(/^openlibrary:/i, '');
+      let cleanKey = id.replace(/^openlibrary:/i, '');
+      cleanKey = cleanKey.replace(/^ol_/i, ''); // Limpa o prefixo ol_ se existir
       const workKey = cleanKey.startsWith('/') ? cleanKey : `/works/${cleanKey}`;
       
       const res = await fetch(`${this.config.baseUrl}${workKey}.json`, {
