@@ -104,18 +104,71 @@ export class OpenLibraryProvider implements BookProvider {
         coverUrl,
         language: 'pt',
         genres: genres.length > 0 ? genres : ['Literatura'],
-        isPublicDomain: false,
-        license: 'Informações do livro disponíveis — download não disponível nesta fonte.',
+      let isPublicDomain = false;
+      const downloadOptions: DownloadOption[] = [];
+
+      try {
+        const editionsRes = await fetch(`${this.config.baseUrl}${workKey}/editions.json`, {
+          headers: { 'User-Agent': this.userAgent },
+        });
+        if (editionsRes.ok) {
+          const editionsData = await editionsRes.json();
+          const entries = editionsData.entries || [];
+          
+          for (const edition of entries) {
+            const iaList = edition.ocaid ? [edition.ocaid] : edition.identifiers?.ia || edition.ia || [];
+            const isPublic = edition.ebook_access === 'public' || edition.public_scan_b === true;
+            
+            if (isPublic && iaList.length > 0) {
+              isPublicDomain = true;
+              const iaId = iaList[0];
+              
+              if (!downloadOptions.some(d => d.format === 'EPUB')) {
+                downloadOptions.push({
+                  format: 'EPUB',
+                  url: `https://archive.org/download/${iaId}/${iaId}.epub`,
+                  isDirectDownload: true,
+                  sourceName: 'Open Library / Internet Archive'
+                });
+              }
+              if (!downloadOptions.some(d => d.format === 'PDF')) {
+                downloadOptions.push({
+                  format: 'PDF',
+                  url: `https://archive.org/download/${iaId}/${iaId}.pdf`,
+                  isDirectDownload: true,
+                  sourceName: 'Open Library / Internet Archive'
+                });
+              }
+              break; // Encontrou edição em domínio público com links no IA
+            }
+          }
+        }
+      } catch (err) {
+        // Ignora falha silenciosamente
+      }
+
+      return {
+        id: `openlibrary:${work.key.replace('/works/', '')}`,
+        slug: `openlibrary-${work.key.replace('/works/', '')}`,
+        title: work.title,
+        subtitle: work.subtitle,
+        authors: ['Autor Registrado na Open Library'],
+        description: description || 'Registro bibliográfico catalogado pela Open Library.',
+        coverUrl,
+        language: 'pt',
+        genres: genres.length > 0 ? genres : ['Literatura'],
+        isPublicDomain,
+        license: isPublicDomain ? 'Domínio Público' : 'Informações do livro disponíveis — download não disponível nesta fonte.',
         officialSourceUrl: `${this.config.baseUrl}${work.key}`,
         sources: [
           {
             sourceName: 'openlibrary',
             externalId: work.key,
             canonicalUrl: `${this.config.baseUrl}${work.key}`,
-            isLegalDownload: false,
+            isLegalDownload: isPublicDomain,
           },
         ],
-        downloadOptions: [],
+        downloadOptions,
       };
     } catch (error) {
       return null;
