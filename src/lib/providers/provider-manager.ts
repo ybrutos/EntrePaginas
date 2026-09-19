@@ -140,10 +140,15 @@ export class BookProviderManager {
     let consolidated = deduplicateBooks(allBooks);
 
     // 6. Filtros pós-agregação
+    // REGRA MANDATÓRIA (REQUISITO DO USUÁRIO): 
+    // "Só disponibilize no portal os livros que de fato estejam disponiveis para donwload"
+    consolidated = consolidated.filter((b) => b.downloadOptions && b.downloadOptions.length > 0);
+
     if (filters?.publicDomainOnly) {
       consolidated = consolidated.filter((b) => b.isPublicDomain);
     }
     if (filters?.hasLegalDownload) {
+      // Já garantido pela regra acima, mas mantido por segurança
       consolidated = consolidated.filter((b) => b.downloadOptions.some((d) => d.isDirectDownload));
     }
     if (filters?.hasAudiobook) {

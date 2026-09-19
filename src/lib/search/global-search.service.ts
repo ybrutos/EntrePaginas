@@ -123,6 +123,17 @@ export class GlobalSearchService {
       (work as any).availabilitySummary = availabilitySummary;
     }
 
+    // REGRA DE OURO (REQUISITO ESTrito DO USUÁRIO):
+    // "Só disponibilize no portal os livros que de fato estejam disponiveis para donwload se não estiver disponiveis não me interessa ter lá"
+    consolidatedWorks = consolidatedWorks.filter(work => 
+      work.accessLinks && work.accessLinks.some(link => 
+        link.type === AccessType.LEGAL_FREE_DOWNLOAD || 
+        link.type === AccessType.OPEN_ACCESS ||
+        link.type === AccessType.PUBLIC_DOMAIN ||
+        link.isDirectDownload === true
+      )
+    );
+
     // 8. Ordenação e Ranking
     consolidatedWorks.sort((a, b) => {
       // Prioriza obras com maior quantidade de fontes e confiança

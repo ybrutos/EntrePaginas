@@ -12,6 +12,11 @@ const ALLOWED_HOSTS = new Set([
 function isHostAllowed(hostname: string): boolean {
   if (ALLOWED_HOSTS.has(hostname)) return true;
   if (hostname.endsWith('.archive.org')) return true;
+  if (hostname.endsWith('.wikisource.org')) return true;
+  if (hostname.endsWith('.europeana.eu') || hostname === 'europeana.eu') return true;
+  if (hostname.endsWith('google.com') || hostname.endsWith('google.com.br') || hostname.endsWith('googleapis.com')) return true;
+  if (hostname.includes('lelivros')) return true;
+  if (hostname.endsWith('openlibrary.org') || hostname === 'openlibrary.org') return true;
   return false;
 }
 
