@@ -123,23 +123,44 @@ export class OpenLibraryProvider implements BookProvider {
               isPublicDomain = true;
               const iaId = iaList[0];
               
-              if (!downloadOptions.some(d => d.format === 'EPUB')) {
-                downloadOptions.push({
-                  format: 'EPUB',
-                  url: `https://archive.org/download/${iaId}/${iaId}.epub`,
-                  isDirectDownload: true,
-                  sourceName: 'Open Library / Internet Archive'
+              // Busca os metadados diretamente no Internet Archive para obter os nomes reais
+              try {
+                const iaRes = await fetch(`https://archive.org/metadata/${iaId}`, {
+                  headers: { 'User-Agent': this.userAgent }
                 });
+                
+                if (iaRes.ok) {
+                  const iaData = await iaRes.json();
+                  const files = iaData.files || [];
+                  const targetFormats = ['.epub', '.pdf', '.mobi'];
+                  
+                  for (const file of files) {
+                    const fileName = file.name;
+                    if (!fileName) continue;
+                    
+                    const formatMatch = targetFormats.find(f => fileName.toLowerCase().endsWith(f));
+                    if (formatMatch) {
+                      const formatName = formatMatch.replace('.', '').toUpperCase();
+                      
+                      // Só adiciona se não tivermos já essa extensão para essa obra
+                      if (!downloadOptions.some(d => d.format === formatName)) {
+                        downloadOptions.push({
+                          format: formatName,
+                          url: `https://archive.org/download/${iaId}/${fileName}`,
+                          isDirectDownload: true,
+                          sourceName: 'Internet Archive'
+                        });
+                      }
+                    }
+                  }
+                }
+              } catch (e) {
+                console.error(`Erro ao consultar metadados do IA para ${iaId}:`, e);
               }
-              if (!downloadOptions.some(d => d.format === 'PDF')) {
-                downloadOptions.push({
-                  format: 'PDF',
-                  url: `https://archive.org/download/${iaId}/${iaId}.pdf`,
-                  isDirectDownload: true,
-                  sourceName: 'Open Library / Internet Archive'
-                });
+              
+              if (downloadOptions.length > 0) {
+                break; // Encontrou edição em domínio público com arquivos confirmados
               }
-              break; // Encontrou edição em domínio público com links no IA
             }
           }
         }

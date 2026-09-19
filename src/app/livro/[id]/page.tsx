@@ -254,7 +254,7 @@ export default function BookDetailPage() {
               </button>
             )}
 
-            {availableDownloads.length > 0 && availableDownloads.map((dl: any, idx: number) => {
+            {availableDownloads.length > 0 ? availableDownloads.map((dl: any, idx: number) => {
               const proxiedUrl = dl.isKindle 
                 ? `/api/download?url=${encodeURIComponent(dl.url)}&format=${encodeURIComponent(dl.format)}&title=${encodeURIComponent(bookData.title)}`
                 : dl.url;
@@ -277,7 +277,13 @@ export default function BookDetailPage() {
                   </span>
                 </a>
               );
-            })}
+            }) : (
+              <div className="w-full py-3.5 px-4 rounded-2xl bg-[#F4EFE6]/50 border border-[#EADFD0]/50 flex items-center justify-center text-center">
+                <span className="text-xs font-medium text-[#725E62]">
+                  Nenhum arquivo digital disponível para download gratuito no momento.
+                </span>
+              </div>
+            )}
 
             {/* Favorite & Shelf Toggle Grid */}
             <div className="grid grid-cols-2 gap-2 pt-1">
