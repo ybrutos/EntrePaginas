@@ -90,6 +90,10 @@ export class InternetArchiveProvider implements BookProvider {
       const data: IAMetadataResponse = await res.json();
       const meta = data.metadata || {};
 
+      // Validação crítica: a API do IA retorna 200 OK com {} se o item não existir
+      if (!meta.title && !data.files?.length) return null;
+
+
       // Extrai formatos de download legais (PDF, EPUB, TXT)
       // REGRA DE OURO: Ignora rigorosamente qualquer arquivo .torrent
       const downloadOptions: DownloadOption[] = [];
