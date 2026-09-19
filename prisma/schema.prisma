@@ -1,0 +1,526 @@
+// Prisma Schema para o Entre Páginas 2.0
+// Global Book Discovery Engine & Gamificação Multiusuário
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                   String              @id @default(cuid())
+  username             String              @unique
+  email                String              @unique
+  passwordHash         String
+  name                 String
+  avatarUrl            String?
+  bio                  String?             @default("Leitor explorando novos mundos no Entre Páginas.")
+  role                 String              @default("USER") // "USER", "ADMIN"
+  isPublicProfile      Boolean             @default(true)
+  participateInRanking Boolean             @default(true)
+  totalReadingXP       Int                 @default(0)
+  totalListeningXP     Int                 @default(0)
+  totalXP              Int                 @default(0)
+  level                Int                 @default(1)
+  levelTitle           String              @default("Curiosa")
+  totalWordsRead       Int                 @default(0)
+  totalMinutesListened Int                 @default(0)
+  streakDays           Int                 @default(0)
+  longestStreak        Int                 @default(0)
+  lastActiveDate       DateTime?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+
+  sessions             Session[]
+  accounts             Account[]
+  libraryItems         LibraryItem[]
+  readingProgress      ReadingProgress[]
+  listeningProgress    ListeningProgress[]
+  readingSessions      ReadingSession[]
+  xpTransactions       XPTransaction[]
+  achievements         UserAchievement[]
+  readingGoals         ReadingGoal[]
+
+  @@index([totalXP])
+  @@index([participateInRanking])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  provider          String  // "credentials", "google", "apple"
+  providerAccountId String
+
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([token])
+}
+
+model ReadingGoal {
+  id          String   @id @default(cuid())
+  userId      String
+  year        Int
+  targetBooks Int      @default(12)
+  targetWords Int?
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, year])
+}
+
+// ==============================================================================
+// HIERARQUIA FRBR / OPEN LIBRARY: WORK -> EDITION -> ACCESS LINKS
+// ==============================================================================
+
+model Work {
+  id                   String            @id @default(cuid())
+  slug                 String            @unique
+  canonicalTitle       String
+  originalTitle        String?
+  normalizedTitle      String
+  description          String?
+  firstPublicationYear Int?
+  primaryAuthorName    String?
+  coverUrl             String?
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+
+  editions             Edition[]
+  aliases              BookAlias[]
+  identifiers          BookIdentifier[]
+  sources              BookSource[]
+  audiobooks           AudiobookSource[]
+  books                Book[]
+
+  @@index([normalizedTitle])
+  @@index([primaryAuthorName])
+}
+
+model Edition {
+  id              String            @id @default(cuid())
+  workId          String
+  title           String
+  normalizedTitle String
+  language        String            @default("pt")
+  publisher       String?
+  publicationYear Int?
+  editionName     String?           // "1ª Edição", "Edição Especial", etc.
+  isbn10          String?
+  isbn13          String?
+  oclc            String?
+  format          String?           // "Paperback", "Hardcover", "EPUB", "PDF"
+  pageCount       Int?
+  coverUrl        String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  work            Work              @relation(fields: [workId], references: [id], onDelete: Cascade)
+  identifiers     BookIdentifier[]
+  accessLinks     BookAccessLink[]
+  sources         BookSource[]
+  audiobooks      AudiobookSource[]
+  books           Book[]
+
+  @@index([workId])
+  @@index([isbn13])
+  @@index([isbn10])
+  @@index([oclc])
+  @@index([normalizedTitle])
+}
+
+model BookIdentifier {
+  id         String   @id @default(cuid())
+  type       String   // "ISBN10", "ISBN13", "OCLC", "LCCN", "OPENLIBRARY", "GOOGLE_BOOKS", "INTERNET_ARCHIVE", "OVERDRIVE", "GUTENBERG"
+  value      String
+  workId     String?
+  editionId  String?
+  createdAt  DateTime @default(now())
+
+  work       Work?    @relation(fields: [workId], references: [id], onDelete: Cascade)
+  edition    Edition? @relation(fields: [editionId], references: [id], onDelete: Cascade)
+
+  @@index([type, value])
+  @@index([workId])
+  @@index([editionId])
+}
+
+model BookAlias {
+  id              String   @id @default(cuid())
+  workId          String
+  title           String
+  normalizedTitle String
+  language        String   @default("pt")
+  aliasType       String   @default("ALTERNATIVE_TITLE") // "TRANSLATED_TITLE", "ORIGINAL_TITLE", "ALTERNATIVE_TITLE"
+  source          String?
+  createdAt       DateTime @default(now())
+
+  work            Work     @relation(fields: [workId], references: [id], onDelete: Cascade)
+
+  @@index([workId])
+  @@index([normalizedTitle])
+}
+
+model BookAccessLink {
+  id          String    @id @default(cuid())
+  editionId   String?
+  accessType  String    // AccessType enum string
+  url         String
+  label       String
+  format      String?
+  isExternal  Boolean   @default(true)
+  sourceName  String
+  price       String?
+  drmInfo     String?
+  verifiedAt  DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+
+  edition     Edition?  @relation(fields: [editionId], references: [id], onDelete: Cascade)
+
+  @@index([editionId])
+  @@index([accessType])
+}
+
+model AudiobookSource {
+  id              String   @id @default(cuid())
+  workId          String
+  editionId       String?
+  narrator        String?
+  durationMinutes Int?
+  durationSeconds Int?
+  language        String   @default("pt")
+  chaptersCount   Int?
+  streamUrl       String?
+  downloadUrl     String?
+  sourceName      String
+  accessType      String   @default("AUDIOBOOK_FREE")
+  createdAt       DateTime @default(now())
+
+  work            Work     @relation(fields: [workId], references: [id], onDelete: Cascade)
+  edition         Edition? @relation(fields: [editionId], references: [id], onDelete: Cascade)
+
+  @@index([workId])
+  @@index([sourceName])
+}
+
+// Entidade Book mantida para total retrocompatibilidade da biblioteca do usuário
+model Book {
+  id                String              @id @default(cuid())
+  slug              String              @unique
+  title             String
+  subtitle          String?
+  description       String?
+  coverUrl          String?
+  publicationYear   Int?
+  language          String              @default("pt")
+  publisher         String?
+  isbn              String?
+  pageCount         Int?
+  estimatedWords    Int?
+  isPublicDomain    Boolean             @default(false)
+  hasAudiobook      Boolean             @default(false)
+  license           String?
+  officialSourceUrl String?
+  workId            String?
+  editionId         String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  work              Work?               @relation(fields: [workId], references: [id], onDelete: SetNull)
+  edition           Edition?            @relation(fields: [editionId], references: [id], onDelete: SetNull)
+
+  authors           BookAuthor[]
+  genres            BookGenre[]
+  sources           BookSource[]
+  formats           BookFormat[]
+  libraryItems      LibraryItem[]
+  readingProgress   ReadingProgress[]
+  listeningProgress ListeningProgress[]
+  xpTransactions    XPTransaction[]
+
+  @@index([workId])
+  @@index([editionId])
+}
+
+model Author {
+  id          String       @id @default(cuid())
+  name        String       @unique
+  birthYear   Int?
+  deathYear   Int?
+  nationality String?
+  books       BookAuthor[]
+}
+
+model BookAuthor {
+  id       String @id @default(cuid())
+  bookId   String
+  authorId String
+  order    Int    @default(0)
+
+  book     Book   @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  author   Author @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@unique([bookId, authorId])
+}
+
+model Genre {
+  id          String      @id @default(cuid())
+  name        String      @unique
+  slug        String      @unique
+  description String?
+  books       BookGenre[]
+}
+
+model BookGenre {
+  id      String @id @default(cuid())
+  bookId  String
+  genreId String
+
+  book    Book   @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  genre   Genre  @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  @@unique([bookId, genreId])
+}
+
+model BookSource {
+  id              String   @id @default(cuid())
+  bookId          String?
+  workId          String?
+  editionId       String?
+  sourceName      String   // "gutenberg", "openlibrary", "librivox", "internet_archive", "standard_ebooks", "wikisource", "google_books", "europeana", "overdrive", "worldcat", etc.
+  externalId      String
+  canonicalUrl    String?
+  license         String?
+  isLegalDownload Boolean  @default(false)
+  isAudiobook     Boolean  @default(false)
+  verifiedAt      DateTime @default(now())
+  createdAt       DateTime @default(now())
+
+  book            Book?    @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  work            Work?    @relation(fields: [workId], references: [id], onDelete: Cascade)
+  edition         Edition? @relation(fields: [editionId], references: [id], onDelete: Cascade)
+
+  @@index([sourceName])
+  @@index([workId])
+  @@index([editionId])
+}
+
+model BookFormat {
+  id                String              @id @default(cuid())
+  bookId            String
+  format            String              // "EPUB", "MOBI", "PDF", "TXT", "HTML", "AUDIOBOOK"
+  downloadUrl       String
+  fileSizeBytes     BigInt?
+  isDirectDownload  Boolean             @default(true)
+  durationMinutes   Int?                // Duração para audiolivros
+  narrator          String?             // Narrador do audiolivro
+  audioStreamingUrl String?             // URL de streaming direto
+  createdAt         DateTime            @default(now())
+
+  book              Book                @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  audioChapters     BookAudioChapter[]
+
+  @@index([bookId, format])
+}
+
+model BookAudioChapter {
+  id              String     @id @default(cuid())
+  bookFormatId    String
+  chapterNumber   Int
+  title           String
+  durationSeconds Int
+  streamUrl       String
+
+  bookFormat      BookFormat @relation(fields: [bookFormatId], references: [id], onDelete: Cascade)
+
+  @@index([bookFormatId, chapterNumber])
+}
+
+model LibraryItem {
+  id                String             @id @default(cuid())
+  userId            String
+  bookId            String
+  status            String             @default("QUERO_LER") // "LENDO", "LIDOS", "QUERO_LER", "PAUSADOS", "ABANDONADOS"
+  isFavorite        Boolean            @default(false)
+  rating            Int?               // 1 a 5
+  review            String?
+  tags              String?            // tags separadas por vírgula
+  startDate         DateTime?
+  finishDate        DateTime?
+  lastReadDate      DateTime?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book              Book               @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  progress          ReadingProgress?
+  listeningProgress ListeningProgress?
+
+  @@unique([userId, bookId])
+  @@index([userId, status])
+}
+
+model ReadingProgress {
+  id                 String       @id @default(cuid())
+  libraryItemId      String       @unique
+  userId             String
+  bookId             String
+  progressPercent    Float        @default(0) // 0 a 100
+  wordsRead          Int          @default(0)
+  maxProgressPercent Float        @default(0) // Idempotência de XP
+  currentChapter     String?
+  lastReadAt         DateTime     @default(now())
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  user               User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book               Book         @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  libraryItem        LibraryItem  @relation(fields: [libraryItemId], references: [id], onDelete: Cascade)
+
+  @@index([userId, bookId])
+}
+
+model ListeningProgress {
+  id                 String       @id @default(cuid())
+  libraryItemId      String       @unique
+  userId             String
+  bookId             String
+  minutesListened    Int          @default(0)
+  maxHistoricalMinutes Int        @default(0) // Idempotência de listeningXP
+  currentChapter     Int          @default(1)
+  currentPositionSec Int          @default(0)
+  lastListenedAt     DateTime     @default(now())
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  user               User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book               Book         @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  libraryItem        LibraryItem  @relation(fields: [libraryItemId], references: [id], onDelete: Cascade)
+
+  @@index([userId, bookId])
+}
+
+model ReadingSession {
+  id                 String       @id @default(cuid())
+  userId             String
+  bookId             String
+  startTime          DateTime     @default(now())
+  endTime            DateTime?
+  minutesRead        Int          @default(0)
+  wordsRead          Int          @default(0)
+  startPercent       Int          @default(0)
+  endPercent         Int          @default(0)
+  createdAt          DateTime     @default(now())
+
+  user               User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, startTime])
+}
+
+model XPTransaction {
+  id            String   @id @default(cuid())
+  userId        String
+  bookId        String?
+  xpEarned      Int
+  xpType        String   // "READING_PROGRESS", "LISTENING", "BOOK_COMPLETED", "STREAK_BONUS", "ACHIEVEMENT"
+  wordsReadDelta Int?
+  minutesAdded  Int?
+  createdAt     DateTime @default(now())
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book          Book?    @relation(fields: [bookId], references: [id], onDelete: SetNull)
+
+  @@index([userId, xpType])
+}
+
+model Achievement {
+  id          String            @id
+  title       String
+  description String
+  icon        String            // Nome do ícone Lucide
+  badgeLevel  String            @default("bronze") // bronze, silver, gold, diamond
+  xpReward    Int               @default(5000)
+  category    String            @default("general")
+  createdAt   DateTime          @default(now())
+
+  users       UserAchievement[]
+}
+
+model UserAchievement {
+  id            String      @id @default(cuid())
+  userId        String
+  achievementId String
+  unlockedAt    DateTime    @default(now())
+
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
+  @@index([userId])
+}
+
+model SearchCache {
+  id           String   @id @default(cuid())
+  queryHash    String   @unique
+  query        String
+  provider     String
+  responseJson String
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  @@index([queryHash, expiresAt])
+}
+
+model SearchLog {
+  id                  String   @id @default(cuid())
+  query               String
+  normalizedQuery     String
+  expandedQueriesJson String?  // JSON array
+  providersExecuted   String?  // JSON array
+  providersFailed     String?  // JSON array
+  durationMs          Int
+  resultCount         Int
+  dedupCount          Int
+  createdAt           DateTime @default(now())
+
+  @@index([normalizedQuery])
+  @@index([createdAt])
+}
+
+model ProviderLog {
+  id           String   @id @default(cuid())
+  provider     String
+  endpoint     String
+  status       String   // "OK", "ERROR", "TIMEOUT", "RATE_LIMITED", "CIRCUIT_OPEN"
+  durationMs   Int
+  errorMessage String?
+  createdAt    DateTime @default(now())
+
+  @@index([provider, createdAt])
+}

@@ -1,0 +1,92 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-primary: #FAF8F5;
+  --bg-secondary: #F4EFE6;
+  --bg-card: #FFFFFF;
+  --text-primary: #2C2224;
+  --text-secondary: #725E62;
+  --wine-primary: #722F37;
+  --wine-hover: #581825;
+  --gold-accent: #D4AF37;
+  --border-soft: #EADFD0;
+}
+
+.dark {
+  --bg-primary: #0B0E14;
+  --bg-secondary: #121822;
+  --bg-card: #18202D;
+  --text-primary: #F7EFE9;
+  --text-secondary: #A69B9E;
+  --wine-primary: #A25866;
+  --wine-hover: #C97D8A;
+  --gold-accent: #F5E8C7;
+  --border-soft: #273347;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  padding-bottom: env(safe-area-inset-bottom, 20px);
+}
+
+/* Scrollbar estética */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(114, 47, 55, 0.2);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(114, 47, 55, 0.4);
+}
+
+/* Efeito suave de página literária */
+.paper-texture {
+  background-color: var(--bg-primary);
+  background-image: radial-gradient(#E8DFC9 0.75px, transparent 0.75px);
+  background-size: 24px 24px;
+}
+
+.glass-header {
+  background: rgba(250, 248, 245, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.dark .glass-header {
+  background: rgba(11, 14, 20, 0.85);
+}
+
+/* Brilho dourado suave */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.gold-shimmer {
+  background: linear-gradient(90deg, #D4AF37 0%, #FFF2B2 50%, #D4AF37 100%);
+  background-size: 200% auto;
+  animation: shimmer 4s linear infinite;
+}
+
+/* Suporte para iPhone notch e barra inferior */
+@supports (padding: max(0px)) {
+  .safe-bottom {
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+}

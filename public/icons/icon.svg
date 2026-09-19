@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#722F37"/>
+      <stop offset="50%" stop-color="#4A1C23"/>
+      <stop offset="100%" stop-color="#182232"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F5E8C7"/>
+      <stop offset="50%" stop-color="#D4AF37"/>
+      <stop offset="100%" stop-color="#A6831E"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="110" fill="url(#bgGrad)"/>
+  <circle cx="256" cy="256" r="190" stroke="url(#goldGrad)" stroke-width="6" fill="none" opacity="0.4" stroke-dasharray="12 12"/>
+  <!-- Open Book Silhouette -->
+  <path d="M256 180 C220 140 140 140 90 150 C80 152 75 160 75 170 L75 360 C75 372 85 380 97 378 C145 370 215 370 256 405 C297 370 367 370 415 378 C427 380 437 372 437 360 L437 170 C437 160 432 152 422 150 C372 140 292 140 256 180 Z" fill="#FAF8F5" filter="drop-shadow(0px 8px 16px rgba(0,0,0,0.3))"/>
+  <!-- Central spine line -->
+  <path d="M256 180 L256 405" stroke="#722F37" stroke-width="5" stroke-linecap="round"/>
+  <!-- Golden Bookmark ribbon -->
+  <path d="M256 130 L256 220 L270 205 L284 220 L284 130 Z" fill="url(#goldGrad)" filter="drop-shadow(0px 4px 8px rgba(0,0,0,0.25))"/>
+  <!-- Sparkles -->
+  <polygon points="380,110 385,125 400,130 385,135 380,150 375,135 360,130 375,125" fill="url(#goldGrad)"/>
+  <polygon points="120,110 123,120 133,123 123,126 120,136 117,126 107,123 117,120" fill="url(#goldGrad)"/>
+</svg>
