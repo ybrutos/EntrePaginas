@@ -148,7 +148,7 @@ describe('LeLivros Discovery Agent', () => {
       mockFetch.mockResolvedValueOnce({ ok: false });
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        text: async () => `<a href="https://lelivros.info/book/abc">Livro</a>`
+        text: async () => `<a href="https://dlivros.com/book/abc">Livro</a>`
       });
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -156,7 +156,7 @@ describe('LeLivros Discovery Agent', () => {
         text: async () => `
           <title>Livro Provider</title>
           <meta property="og:description" content="Desc">
-          <a href="https://lelivros.info/file.pdf">PDF</a>
+          <a href="https://dlivros.com/file.pdf">PDF</a>
         `
       });
       mockFetch.mockResolvedValueOnce({
@@ -177,7 +177,7 @@ describe('LeLivros Discovery Agent', () => {
       const link = work.accessLinks[0];
       expect(link.format).toBe('PDF');
       expect(link.isExternal).toBe(true);
-      expect(link.isDirectDownload).toBe(false);
+      expect(link.isDirectDownload).toBe(true);
       expect((link as any).accessType).toBe('UNVERIFIED_DOWNLOAD');
     });
   });

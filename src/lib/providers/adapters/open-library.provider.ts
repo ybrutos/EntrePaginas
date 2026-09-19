@@ -95,16 +95,7 @@ export class OpenLibraryProvider implements BookProvider {
       const coverUrl = coverId ? `https://covers.openlibrary.org/b/id/${coverId}-L.jpg` : undefined;
       const genres = (work.subjects || []).slice(0, 6);
 
-      return {
-        id: `openlibrary:${work.key.replace('/works/', '')}`,
-        slug: `openlibrary-${work.key.replace('/works/', '')}`,
-        title: work.title,
-        subtitle: work.subtitle,
-        authors: ['Autor Registrado na Open Library'],
-        description: description || 'Registro bibliográfico catalogado pela Open Library.',
-        coverUrl,
-        language: 'pt',
-        genres: genres.length > 0 ? genres : ['Literatura'],
+      // Removido o return prematuro que quebrava o script
       let isPublicDomain = false;
       const downloadOptions: DownloadOption[] = [];
 
