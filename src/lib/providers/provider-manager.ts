@@ -159,6 +159,14 @@ export class BookProviderManager {
       consolidated.sort((a, b) => (b.publicationYear || 0) - (a.publicationYear || 0));
     } else if (filters?.sortBy === 'sources') {
       consolidated.sort((a, b) => b.sources.length - a.sources.length);
+    } else {
+      // Ordenação padrão por relevância, priorizando obras com download direto
+      consolidated.sort((a, b) => {
+        const aHasDownload = (a.downloadOptions?.length || 0) > 0 ? 1 : 0;
+        const bHasDownload = (b.downloadOptions?.length || 0) > 0 ? 1 : 0;
+        if (aHasDownload !== bHasDownload) return bHasDownload - aHasDownload;
+        return (b.sourcesCount || b.sources.length) - (a.sourcesCount || a.sources.length);
+      });
     }
 
     const finalResult: BookSearchResult = {
@@ -287,6 +295,7 @@ export class BookProviderManager {
                 url: l.url,
                 isDirectDownload: Boolean(l.isDirectDownload),
                 notes: l.notes,
+                sourceName: l.sourceName || (res as any).editions?.[0]?.sourceName || 'Fonte Desconhecida',
               })),
               audioOptions: ((res as any).audiobooks || []).map((a: any) => ({
                 format: 'MP3',

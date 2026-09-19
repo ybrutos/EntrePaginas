@@ -21,6 +21,7 @@ interface OpenLibraryDoc {
   publisher?: string[];
   ebook_access?: string;
   public_scan_b?: boolean;
+  ia?: string[];
 }
 
 interface OpenLibrarySearchResponse {
@@ -150,6 +151,26 @@ export class OpenLibraryProvider implements BookProvider {
     const genres = (doc.subject || []).slice(0, 5);
     const isPublicDomain = doc.ebook_access === 'public' || doc.public_scan_b === true;
 
+    const downloadOptions: DownloadOption[] = [];
+    let isLegalDownload = false;
+
+    if (isPublicDomain && doc.ia && doc.ia.length > 0) {
+      isLegalDownload = true;
+      const iaId = doc.ia[0];
+      downloadOptions.push({
+        format: 'EPUB',
+        url: `https://archive.org/download/${iaId}/${iaId}.epub`,
+        isDirectDownload: true,
+        sourceName: 'Open Library / Internet Archive'
+      });
+      downloadOptions.push({
+        format: 'PDF',
+        url: `https://archive.org/download/${iaId}/${iaId}.pdf`,
+        isDirectDownload: true,
+        sourceName: 'Open Library / Internet Archive'
+      });
+    }
+
     return {
       id: `openlibrary:${workId}`,
       slug: `openlibrary-${workId}`,
@@ -174,10 +195,10 @@ export class OpenLibraryProvider implements BookProvider {
           externalId: workId,
           canonicalUrl: `${this.config.baseUrl}${doc.key}`,
           license: isPublicDomain ? 'Public Domain' : 'Copyright',
-          isLegalDownload: false,
+          isLegalDownload,
         },
       ],
-      downloadOptions: [],
+      downloadOptions,
     };
   }
 }

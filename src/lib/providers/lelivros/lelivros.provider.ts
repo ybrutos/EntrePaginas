@@ -27,7 +27,7 @@ import type {
 import { AccessType } from '../types';
 import { LeLivrosDiscoveryService, DiscoveredBook } from './lelivros-discovery.service';
 
-const BASE_URL = process.env.LELIVROS_BASE_URL || 'https://lelivros.info';
+const BASE_URL = process.env.LELIVROS_BASE_URL || 'https://dlivros.com';
 
 const CAPABILITIES: ProviderCapabilities = {
   search: true,
@@ -49,19 +49,24 @@ function discoveredBookToWorkRecord(book: DiscoveredBook, query: BookSearchQuery
   const workId = `lelivros:${encodeURIComponent((book.title || 'unknown').toLowerCase().replace(/\s+/g, '-'))}`;
 
   // Converte SourceAccess[] em BookAccessLink[]
-  const accessLinks: BookAccessLink[] = book.sourceAccesses.map((sa): BookAccessLink => ({
-    type: AccessType.EXTERNAL_LINK,   // NUNCA LEGAL_FREE_DOWNLOAD para Le Livros
-    url: sa.downloadUrl || sa.accessPageUrl || sa.sourcePageUrl,
-    label: buildAccessLabel(sa),
-    format: sa.format,
-    isExternal: true,
-    sourceName: sa.providerLabel,
-    isDirectDownload: false,          // Sempre false — acesso é sempre externo
-    verifiedAt: new Date(),
-    notes: buildAccessNotes(sa),
-    // Campos de descoberta estendidos (disponíveis via cast)
-    ...(sa as any),
-  }));
+  const accessLinks: BookAccessLink[] = book.sourceAccesses.map((sa): BookAccessLink => {
+    const isFileFormat = sa.format && ['EPUB', 'MOBI', 'PDF'].includes(sa.format.toUpperCase());
+    const isDirect = !!sa.downloadUrl && isFileFormat;
+
+    return {
+      type: AccessType.EXTERNAL_LINK,   // NUNCA LEGAL_FREE_DOWNLOAD para Le Livros (mantém-se)
+      url: sa.downloadUrl || sa.accessPageUrl || sa.sourcePageUrl,
+      label: buildAccessLabel(sa),
+      format: sa.format,
+      isExternal: true,
+      sourceName: sa.providerLabel,
+      isDirectDownload: isDirect,
+      verifiedAt: new Date(),
+      notes: buildAccessNotes(sa),
+      // Campos de descoberta estendidos (disponíveis via cast)
+      ...(sa as any),
+    };
+  });
 
   const identifiers: Array<{ type: string; value: string }> = [];
   if (book.isbn13) identifiers.push({ type: 'ISBN13', value: book.isbn13 });
@@ -253,7 +258,7 @@ export class LeLivrosProvider implements BookProvider {
       const tid = setTimeout(() => controller.abort(), 8000);
       const res = await fetch(`${BASE_URL}/`, {
         signal: controller.signal,
-        headers: { 'User-Agent': 'EntrePageas-Bot/1.0 health-check' },
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
       });
       clearTimeout(tid);
       return {

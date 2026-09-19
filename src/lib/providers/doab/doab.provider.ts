@@ -72,7 +72,8 @@ export class DOABProvider implements BookProvider {
           notes: '🟢 OPEN ACCESS: Livro acadêmico com revisão por pares em acesso aberto.',
         };
 
-        const syntheticId = `doab_${Math.random().toString(36).slice(2)}`;
+        // Codifica os termos de busca no ID sintético para que possamos recuperá-los no getBook()
+        const syntheticId = encodeURIComponent(searchTerms);
         const title = query.title || query.rawQuery || 'Publicação Acadêmica DOAB';
 
         const edition: EditionRecord = {
@@ -127,7 +128,9 @@ export class DOABProvider implements BookProvider {
   }
 
   async getBook(id: string): Promise<WorkRecord | null> {
-    const res = await this.search({ rawQuery: id, limit: 1 });
+    // Decodifica o ID sintético para recuperar os termos originais de busca
+    const searchTerms = decodeURIComponent(id.replace(/^doab_/, '').replace(/^doab:/, ''));
+    const res = await this.search({ rawQuery: searchTerms, limit: 1 });
     return res.works[0] || null;
   }
 

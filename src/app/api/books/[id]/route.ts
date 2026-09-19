@@ -35,8 +35,18 @@ export async function GET(
       libraryItem = localBook?.libraryItems?.[0] || null;
     }
 
+    const formattedDownloads = (book.downloadOptions || []).map((opt) => ({
+      format: opt.format.toLowerCase(),
+      url: opt.url,
+      source: opt.sourceName || 'Desconhecido',
+      isDirectDownload: opt.isDirectDownload
+    }));
+
     return NextResponse.json({
-      book,
+      book: {
+        ...book,
+        downloads: formattedDownloads,
+      },
       localBookId: localBook?.id || null,
       userState: libraryItem
         ? {

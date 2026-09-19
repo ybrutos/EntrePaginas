@@ -74,6 +74,11 @@ export default function BookCard({
               {avail.hasCommercialPurchase && !avail.hasLegalDownload && !avail.hasLibraryBorrow && !avail.hasPreviewOnly && <ShoppingCart className="w-2.5 h-2.5" />}
               <span>{avail.primaryBadge.label}</span>
             </span>
+          ) : book.downloadOptions && book.downloadOptions.some(d => d.isDirectDownload) ? (
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-md shadow-sm border flex items-center gap-1 bg-emerald-50 text-emerald-800 border-emerald-300">
+              <Download className="w-2.5 h-2.5" />
+              <span>Download Legal Disponível</span>
+            </span>
           ) : book.isPublicDomain ? (
             <span className="bg-[#1B4D3E]/90 text-white text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded-full backdrop-blur-md shadow-sm">
               Domínio Público
@@ -156,7 +161,7 @@ export default function BookCard({
         </div>
 
         {/* Card Footer Actions */}
-        <div className="mt-4 pt-3 border-t border-[#EADFD0]/60 flex items-center justify-between gap-2">
+        <div className="mt-4 pt-3 border-t border-[#EADFD0]/60 flex items-center justify-between gap-2 flex-wrap">
           {typeof progressPercent === 'number' && onOpenProgress ? (
             <button
               onClick={() => onOpenProgress(book)}
@@ -171,12 +176,53 @@ export default function BookCard({
             </span>
           )}
 
-          <Link
-            href={detailUrl}
-            className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-[#722F37] hover:bg-[#581825] text-white transition-all shadow-sm active:scale-95"
-          >
-            Ver Obra
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            {(() => {
+              const allDownloads = [
+                ...(book.downloadOptions || []),
+                ...((book as any).downloads || [])
+              ];
+              if (allDownloads.length === 0) return null;
+              
+              const directDownloads = allDownloads.filter(d => d.isDirectDownload && d.format);
+              
+              // Deduplicar por formato
+              const uniqueFormats = new Map();
+              directDownloads.forEach(d => {
+                const fmt = d.format.toUpperCase();
+                if (!uniqueFormats.has(fmt) || d.providerName === 'gutenberg') { // prefere gutenberg
+                  uniqueFormats.set(fmt, d);
+                }
+              });
+
+              return Array.from(uniqueFormats.values()).map((dl, idx) => {
+                const handleDownload = (e: React.MouseEvent) => {
+                  e.preventDefault();
+                  const proxyUrl = `/api/download?url=${encodeURIComponent(dl.url)}&format=${encodeURIComponent(dl.format)}&title=${encodeURIComponent(book.title)}`;
+                  window.open(proxyUrl, '_blank');
+                };
+
+                return (
+                  <button
+                    key={idx}
+                    onClick={handleDownload}
+                    className="text-xs font-semibold px-2.5 py-1.5 rounded-xl bg-[#F4EFE6] border border-[#EADFD0] text-[#722F37] hover:bg-[#EADFD0] transition-all shadow-sm active:scale-95 flex items-center gap-1"
+                    title={`Baixar arquivo .${dl.format.toUpperCase()}`}
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    {dl.format.toUpperCase()}
+                  </button>
+                );
+              });
+            })()}
+
+            <Link
+              href={detailUrl}
+              className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-[#722F37] hover:bg-[#581825] text-white transition-all shadow-sm active:scale-95 whitespace-nowrap"
+            >
+              Ver Obra
+            </Link>
+          </div>
         </div>
       </div>
     </div>

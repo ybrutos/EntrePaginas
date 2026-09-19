@@ -6,13 +6,14 @@ export interface AudioChapter {
 }
 
 export interface DownloadOption {
-  format: 'EPUB' | 'MOBI' | 'PDF' | 'TXT' | 'HTML' | 'AUDIOBOOK' | string;
+  format: string; // PDF, EPUB, MOBI, MP3, etc.
   url: string;
   sizeBytes?: number;
-  isDirectDownload: boolean;
+  isDirectDownload?: boolean;
   durationMinutes?: number;
   narrator?: string;
   audioStreamingUrl?: string;
+  sourceName?: string; // The specific provider or mirror serving the file
   chapters?: AudioChapter[];
 }
 

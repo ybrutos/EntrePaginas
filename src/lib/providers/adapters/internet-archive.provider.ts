@@ -48,7 +48,7 @@ export class InternetArchiveProvider implements BookProvider {
   async searchBooks(query: string, filters?: SearchFilters): Promise<BookSearchResult> {
     try {
       const cleanQ = query && query.trim().length > 0 ? query.trim() : 'Machado de Assis';
-      const searchUrl = `${this.config.baseUrl}/advancedsearch.php?q=title%3A(${encodeURIComponent(cleanQ)})+AND+mediatype%3Atexts&fl[]=identifier,title,creator,year,description&rows=${filters?.limit || 8}&output=json`;
+      const searchUrl = `${this.config.baseUrl}/advancedsearch.php?q=title%3A(${encodeURIComponent(cleanQ)})+AND+mediatype%3Atexts+AND+format%3A(EPUB+OR+MOBI+OR+PDF)&fl[]=identifier,title,creator,year,description&rows=${filters?.limit || 8}&output=json`;
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), this.config.timeoutMs);
@@ -103,11 +103,13 @@ export class InternetArchiveProvider implements BookProvider {
         const sizeBytes = file.size ? parseInt(file.size, 10) : undefined;
 
         if (lowerName.endsWith('.pdf')) {
-          downloadOptions.push({ format: 'PDF', url: fileUrl, sizeBytes, isDirectDownload: true });
+          downloadOptions.push({ format: 'PDF', url: fileUrl, sizeBytes, isDirectDownload: true, sourceName: 'Internet Archive' });
         } else if (lowerName.endsWith('.epub')) {
-          downloadOptions.push({ format: 'EPUB', url: fileUrl, sizeBytes, isDirectDownload: true });
+          downloadOptions.push({ format: 'EPUB', url: fileUrl, sizeBytes, isDirectDownload: true, sourceName: 'Internet Archive' });
         } else if (lowerName.endsWith('.txt')) {
-          downloadOptions.push({ format: 'TXT', url: fileUrl, sizeBytes, isDirectDownload: true });
+          downloadOptions.push({ format: 'TXT', url: fileUrl, sizeBytes, isDirectDownload: true, sourceName: 'Internet Archive' });
+        } else if (lowerName.endsWith('.mobi')) {
+          downloadOptions.push({ format: 'MOBI', url: fileUrl, sizeBytes, isDirectDownload: true, sourceName: 'Internet Archive' });
         }
       }
 

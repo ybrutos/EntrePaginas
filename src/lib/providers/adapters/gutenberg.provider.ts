@@ -135,13 +135,13 @@ export class GutenbergProvider implements BookProvider {
 
     for (const [mime, url] of Object.entries(item.formats || {})) {
       if (mime.includes('epub')) {
-        downloadOptions.push({ format: 'EPUB', url, isDirectDownload: true });
+        downloadOptions.push({ format: 'EPUB', url, isDirectDownload: true, sourceName: 'Projeto Gutenberg' });
       } else if (mime.includes('mobipocket') || mime.includes('kf8') || mime.includes('mobi')) {
-        downloadOptions.push({ format: 'MOBI', url, isDirectDownload: true });
+        downloadOptions.push({ format: 'MOBI', url, isDirectDownload: true, sourceName: 'Projeto Gutenberg' });
       } else if (mime.includes('text/html')) {
-        downloadOptions.push({ format: 'HTML', url, isDirectDownload: true });
+        downloadOptions.push({ format: 'HTML', url, isDirectDownload: true, sourceName: 'Projeto Gutenberg' });
       } else if (mime.includes('text/plain')) {
-        downloadOptions.push({ format: 'TXT', url, isDirectDownload: true });
+        downloadOptions.push({ format: 'TXT', url, isDirectDownload: true, sourceName: 'Projeto Gutenberg' });
       } else if (mime.includes('image/jpeg')) {
         coverUrl = url;
       }

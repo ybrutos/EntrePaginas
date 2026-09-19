@@ -132,8 +132,36 @@ export default function BookDetailPage() {
 
   const hasLegalDownloads = bookData.downloadOptions && bookData.downloadOptions.length > 0;
   const primaryAuthor = Array.isArray(bookData.authors) ? bookData.authors.join(', ') : 'Autor Desconhecido';
-  const epubDownload = bookData.downloadOptions?.find((d: any) => d.format?.toUpperCase() === 'EPUB');
   const htmlRead = bookData.downloadOptions?.find((d: any) => d.format?.toUpperCase() === 'HTML');
+  
+  // Agrupar downloads e formatos compatíveis
+  const kindleFormats = ['EPUB', 'MOBI', 'AZW3', 'PDF'];
+  const availableDownloads = bookData.downloads
+    ?.filter((d: any) => d.url && d.format && !d.format.toUpperCase().includes('AUDIO') && !d.format.toUpperCase().includes('MP3'))
+    .map((d: any) => {
+      const fmtUpper = d.format.toUpperCase();
+      const detectedKindle = kindleFormats.find(kf => fmtUpper.includes(kf));
+      return {
+        ...d,
+        isKindle: !!detectedKindle,
+        displayFormat: detectedKindle || d.format,
+        sourceName: d.source || 'Fonte Externa'
+      };
+    })
+    .reduce((acc: any[], current: any) => {
+      // Diferencia por formato e fonte para não perder downloads do mesmo formato de fontes diferentes
+      const uniqueKey = `${current.displayFormat}-${current.sourceName}`;
+      if (!acc.find((item: any) => `${item.displayFormat}-${item.sourceName}` === uniqueKey)) {
+        acc.push(current);
+      }
+      return acc;
+    }, [])
+    .sort((a: any, b: any) => {
+      if (a.isKindle && !b.isKindle) return -1;
+      if (!a.isKindle && b.isKindle) return 1;
+      return kindleFormats.indexOf(a.displayFormat) - kindleFormats.indexOf(b.displayFormat);
+    }) || [];
+
   const audioOption = bookData.downloadOptions?.find((d: any) => d.format?.toUpperCase() === 'AUDIOBOOK' || d.format?.toUpperCase() === 'MP3') || bookData.audioOptions?.[0];
   const audioUrl = audioOption?.audioStreamingUrl || audioOption?.url || bookData.audiobookDetails?.streamUrl;
   const hasAudiobook = Boolean(bookData.hasAudiobook || audioUrl || bookData.audiobookDetails || audiobooks.length > 0);
@@ -226,18 +254,30 @@ export default function BookDetailPage() {
               </button>
             )}
 
-            {/* Baixar EPUB Legal */}
-            {epubDownload ? (
-              <a
-                href={epubDownload.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full py-3 px-4 rounded-2xl bg-[#F4EFE6] hover:bg-[#EADFD0] text-[#2C2224] font-semibold text-xs flex items-center justify-center gap-2 border border-[#EADFD0] transition-colors"
-              >
-                <Download className="w-4 h-4 text-[#722F37]" />
-                <span>⬇️ Baixar EPUB (Compatível com Kindle)</span>
-              </a>
-            ) : null}
+            {availableDownloads.length > 0 && availableDownloads.map((dl: any, idx: number) => {
+              const proxiedUrl = dl.isKindle 
+                ? `/api/download?url=${encodeURIComponent(dl.url)}&format=${encodeURIComponent(dl.format)}&title=${encodeURIComponent(bookData.title)}`
+                : dl.url;
+
+              return (
+                <a
+                  key={idx}
+                  href={proxiedUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`w-full py-3 px-4 rounded-2xl font-semibold text-xs flex items-center justify-center gap-2 border transition-colors ${
+                    dl.isKindle 
+                      ? 'bg-[#F4EFE6] hover:bg-[#EADFD0] text-[#2C2224] border-[#EADFD0]' 
+                      : 'bg-white hover:bg-gray-50 text-[#725E62] border-gray-200'
+                  }`}
+                >
+                  {dl.isKindle ? <Download className="w-4 h-4 text-[#722F37]" /> : <ExternalLink className="w-4 h-4 text-[#725E62]" />}
+                  <span>
+                    {dl.isKindle ? `⬇️ Baixar ${dl.displayFormat} (${dl.sourceName})` : `🌐 Acessar Fonte (${dl.displayFormat})`}
+                  </span>
+                </a>
+              );
+            })}
 
             {/* Favorite & Shelf Toggle Grid */}
             <div className="grid grid-cols-2 gap-2 pt-1">

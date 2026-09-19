@@ -5,7 +5,7 @@
   "description": "Entre Páginas - Biblioteca digital e plataforma de gamificação de leitura para Karolayne",
   "scripts": {
     "dev": "next dev -p 3001",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start -p 3001",
     "lint": "eslint src --ext .ts,.tsx",
     "test": "vitest run",
@@ -37,7 +37,7 @@
     "@types/react-dom": "^18.3.5",
     "@typescript-eslint/parser": "^8.70.0",
     "autoprefixer": "^10.4.20",
-    "eslint": "^10.11.0",
+    "eslint": "^8.57.0",
     "eslint-config-next": "^16.3.5",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",

@@ -121,14 +121,14 @@ export function deduplicateBooks(books: UnifiedBook[]): UnifiedBook[] {
       }
     }
 
-    // 2. Mescla opções de download sem duplicar formatos
+    // 2. Mescla opções de download sem duplicar formatos para o MESMO SOURCE
     target.downloadOptions = target.downloadOptions || [];
     for (const opt of candidate.downloadOptions || []) {
       const exists = target.downloadOptions.some(
-        (d) => d.format.toUpperCase() === opt.format.toUpperCase()
+        (d) => d.format.toUpperCase() === opt.format.toUpperCase() && d.sourceName === opt.sourceName
       );
       if (!exists) {
-        target.downloadOptions.push(opt);
+        target.downloadOptions.push({ ...opt });
       }
     }
 
